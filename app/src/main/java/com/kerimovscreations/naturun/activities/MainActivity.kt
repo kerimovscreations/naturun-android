@@ -3,7 +3,9 @@ package com.kerimovscreations.naturun.activities
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -30,6 +32,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var actionBtn: Button
     private lateinit var cameraBtn: Button
+    private lateinit var warningCard: View
+    private lateinit var warningCount: TextView
 
     /**
      * Variables
@@ -117,6 +121,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun bind() {
         actionBtn = findViewById(R.id.animation_action_btn)
         cameraBtn = findViewById(R.id.follow_action_btn)
+        warningCard = findViewById(R.id.warning_card)
+        warningCount = findViewById(R.id.info_count)
 
         actionBtn.setOnClickListener { onAction() }
         cameraBtn.setOnClickListener { onFollowCamera() }
@@ -137,7 +143,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         val driverRouteCoordinates = DataSource.getMovementLocations()
 
         DriverService.instance.driverCoordinateBSubject.onNext(driverRouteCoordinates[currentTimeStep])
-
 
         timerSubscription = io.reactivex.Observable.interval(2, TimeUnit.SECONDS).subscribe {
             currentTimeStep++
@@ -214,6 +219,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     .snippet("Time: ${animal.updatedAt}")
                     .icon(animalIc)
                 animalMarkers.add(googleMap.addMarker(animalMarkerOptions))
+            }
+
+            if (animalMarkers.isEmpty()) {
+                warningCard.visibility = View.GONE
+            } else {
+                warningCard.visibility = View.VISIBLE
+                warningCount.text = animalMarkers.size.toString()
             }
         }
     }
