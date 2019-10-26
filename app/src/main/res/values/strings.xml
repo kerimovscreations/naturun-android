@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Naturun</string>
+    <string name="web_client_id">804365780700-p8vlfqfgmau7ovsqk16edfrq6dqde9d9.apps.googleusercontent.com</string>
+    <string name="used_id_key">USER_ID</string>
 </resources>

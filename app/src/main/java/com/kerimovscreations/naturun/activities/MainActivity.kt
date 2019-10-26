@@ -1,25 +1,20 @@
 package com.kerimovscreations.naturun.activities
 
-import android.app.Activity
-import android.content.Intent
+import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import com.firebase.ui.auth.AuthUI
-import com.firebase.ui.auth.IdpResponse
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.MAP_TYPE_SATELLITE
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import com.kerimovscreations.naturun.R
 import com.kerimovscreations.naturun.services.DriverService
 import com.kerimovscreations.naturun.tools.DataSource
 import io.reactivex.disposables.Disposable
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 
@@ -37,7 +32,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
      * Variables
      */
 
-    private var user: FirebaseUser? = null
     private var googleMap: GoogleMap? = null
     private var isDriverAnimating = false
 
@@ -45,6 +39,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var timerSubscription: Disposable? = null
 
     private var driverMarker: Marker? = null
+
+    private var localUserId: String? = null
 
     /**
      * Activity methods
@@ -56,23 +52,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         bind()
 
-        FirebaseAuth.getInstance().currentUser?.let {
-            this.user = it
-        }
-
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment!!.getMapAsync(this)
+
+        val pref = applicationContext.getSharedPreferences("LocalPref", Context.MODE_PRIVATE)
+
+        localUserId = pref.getString(getString(R.string.used_id_key), null)
+
+        if (localUserId == null) {
+            val uuid = UUID.randomUUID()
+            localUserId = uuid.toString()
+            pref.edit().putString(getString(R.string.used_id_key), localUserId).apply()
+        }
     }
 
     override fun onResume() {
         super.onResume()
-
-        if (this.user == null) {
-            toAuth()
-        }
-
-        startDriverAnimation()
 
         driverCoordinateSubscription =
             DriverService.driverCoordinateBSubject.subscribe({ coordinate ->
@@ -101,25 +97,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         actionBtn = findViewById(R.id.animation_action_btn)
 
         actionBtn.setOnClickListener { onAction() }
-    }
-
-    /**
-     * Navigation
-     */
-
-    private fun toAuth() {
-        val providers = arrayListOf(
-            AuthUI.IdpConfig.EmailBuilder().build(),
-            AuthUI.IdpConfig.GoogleBuilder().build()
-        )
-
-        startActivityForResult(
-            AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setAvailableProviders(providers)
-                .build(),
-            RC_SIGN_IN
-        )
     }
 
     /**
@@ -161,7 +138,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             if (driverMarker == null) {
                 val carIc = BitmapDescriptorFactory.fromResource(R.mipmap.car_ic)
 
-                val markerOptions =  MarkerOptions().position(coordinate)
+                val markerOptions = MarkerOptions().position(coordinate)
                     .title("Current Location")
                     .snippet("Simulated driving action")
                     .icon(carIc)
@@ -195,27 +172,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    /**
-     * Activity results
-     */
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == RC_SIGN_IN) {
-            val response = IdpResponse.fromResultIntent(data)
-
-            if (resultCode == Activity.RESULT_OK) {
-                FirebaseAuth.getInstance().currentUser?.let {
-                    this.user = it
-                }
-            } else {
-                response?.error?.errorCode?.let { errorCode ->
-                    Log.e("APP", "Error code $errorCode")
-                }
-            }
-        }
-    }
 
     /**
      * Map callback
@@ -225,13 +181,5 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap = g0
         googleMap?.mapType = MAP_TYPE_SATELLITE
         googleMap?.setPadding(24, 0, 0, 0)
-    }
-
-    /**
-     * Constants
-     */
-
-    companion object {
-        const val RC_SIGN_IN = 1
     }
 }
