@@ -13,9 +13,11 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.kerimovscreations.naturun.R
+import com.kerimovscreations.naturun.models.Animal
 import com.kerimovscreations.naturun.services.DriverService
 import com.kerimovscreations.naturun.tools.DataSource
 import io.reactivex.disposables.Disposable
+import java.sql.Driver
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -36,11 +38,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var isDriverAnimating = false
 
     private var driverCoordinateSubscription: Disposable? = null
+    private var nearbyAnimalCoordinatesSubscription: Disposable? = null
     private var timerSubscription: Disposable? = null
 
     private var driverMarker: Marker? = null
 
     private var localUserId: String? = null
+
+    private var animalMarkers = arrayListOf<Marker>()
+
+    private var animalIc: BitmapDescriptor? = null
+
 
     /**
      * Activity methods
@@ -65,6 +73,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             localUserId = uuid.toString()
             pref.edit().putString(getString(R.string.used_id_key), localUserId).apply()
         }
+
+        animalIc = BitmapDescriptorFactory.fromResource(R.mipmap.animal_ic)
     }
 
     override fun onResume() {
@@ -78,6 +88,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }, { error ->
                 error.printStackTrace()
             })
+
+        nearbyAnimalCoordinatesSubscription =
+            DriverService.instance.nearbyAnimalsCoordinatesBSubject.subscribe({ animals ->
+                runOnUiThread {
+                    drawAnimals(animals)
+                }
+            }, { error ->
+                error.printStackTrace()
+            })
     }
 
     override fun onPause() {
@@ -86,6 +105,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         stopDriverAnimation()
 
         driverCoordinateSubscription?.dispose()
+        nearbyAnimalCoordinatesSubscription?.dispose()
         timerSubscription?.dispose()
     }
 
@@ -115,7 +135,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         DriverService.instance.driverCoordinateBSubject.onNext(driverRouteCoordinates[currentTimeStep])
 
-        timerSubscription = io.reactivex.Observable.interval(3, TimeUnit.SECONDS).subscribe {
+
+        timerSubscription = io.reactivex.Observable.interval(2, TimeUnit.SECONDS).subscribe {
             currentTimeStep++
             if (currentTimeStep < driverRouteCoordinates.size) {
                 DriverService.instance.driverCoordinateBSubject.onNext(driverRouteCoordinates[currentTimeStep])
@@ -138,9 +159,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap?.let { googleMap ->
 
             val finalCoordinate = LatLng(coordinate.latitude + 0.003, coordinate.longitude)
-            DriverService.instance.postLocation(this.localUserId!!, coordinate) { result, message ->
-                Log.e("APP", "$result : $message")
+            DriverService.instance.postLocation(this.localUserId!!, coordinate) { _, _ ->
             }
+            DriverService.instance.getNearbyAnimals(
+                coordinate,
+                1000
+            ) { _, _ -> }
 
             if (driverMarker == null) {
                 val carIc = BitmapDescriptorFactory.fromResource(R.mipmap.car_ic)
@@ -162,6 +186,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 .tilt(80f)
                 .build()
             googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+        }
+    }
+
+    private fun drawAnimals(animals: List<Animal>) {
+        googleMap?.let { googleMap ->
+
+            animalMarkers.forEach { marker ->
+                marker.remove()
+            }
+
+            animalMarkers.clear()
+
+            animals.forEach { animal ->
+                val animalMarkerOptions = MarkerOptions().position(
+                    LatLng(
+                        animal.coordinates.latitude,
+                        animal.coordinates.longitude
+                    )
+                )
+                    .title("Animal id: ${animal.deviceId}")
+                    .snippet("Time: ${animal.updatedAt}")
+                    .icon(animalIc)
+                animalMarkers.add(googleMap.addMarker(animalMarkerOptions))
+            }
         }
     }
 
