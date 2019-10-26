@@ -25,4 +25,19 @@
         android:text="Start"
         android:textColor="@color/white" />
 
+    <Button
+        android:id="@+id/follow_action_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="32dp"
+        android:layout_alignParentEnd="true"
+        android:background="@drawable/bg_action_btn_orange"
+        android:drawableStart="@drawable/ic_autorenew_black_24dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:text="Camera"
+        android:textColor="@color/white" />
+
 </RelativeLayout>

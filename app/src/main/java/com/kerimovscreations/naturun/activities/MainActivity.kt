@@ -9,6 +9,7 @@ import androidx.core.content.res.ResourcesCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.MAP_TYPE_SATELLITE
+import com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
@@ -17,7 +18,6 @@ import com.kerimovscreations.naturun.models.Animal
 import com.kerimovscreations.naturun.services.DriverService
 import com.kerimovscreations.naturun.tools.DataSource
 import io.reactivex.disposables.Disposable
-import java.sql.Driver
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
      */
 
     private lateinit var actionBtn: Button
+    private lateinit var cameraBtn: Button
 
     /**
      * Variables
@@ -36,6 +37,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var googleMap: GoogleMap? = null
     private var isDriverAnimating = false
+    private var isAutoCameraMoveEnabled = true
 
     private var driverCoordinateSubscription: Disposable? = null
     private var nearbyAnimalCoordinatesSubscription: Disposable? = null
@@ -48,7 +50,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var animalMarkers = arrayListOf<Marker>()
 
     private var animalIc: BitmapDescriptor? = null
-
 
     /**
      * Activity methods
@@ -115,8 +116,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun bind() {
         actionBtn = findViewById(R.id.animation_action_btn)
+        cameraBtn = findViewById(R.id.follow_action_btn)
 
         actionBtn.setOnClickListener { onAction() }
+        cameraBtn.setOnClickListener { onFollowCamera() }
     }
 
     /**
@@ -179,13 +182,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 driverMarker?.position = coordinate
             }
 
-            val cameraPosition = CameraPosition.Builder()
-                .target(finalCoordinate)
-                .zoom(17f)
-                .bearing(0f)
-                .tilt(80f)
-                .build()
-            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+            if (isAutoCameraMoveEnabled){
+                val cameraPosition = CameraPosition.Builder()
+                    .target(finalCoordinate)
+                    .zoom(17f)
+                    .bearing(0f)
+                    .tilt(80f)
+                    .build()
+                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+            }
         }
     }
 
@@ -231,6 +236,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun onFollowCamera() {
+        cameraBtn.alpha = 1.0f
+        isAutoCameraMoveEnabled = true
+    }
+
 
     /**
      * Map callback
@@ -240,5 +250,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap = g0
         googleMap?.mapType = MAP_TYPE_SATELLITE
         googleMap?.setPadding(24, 0, 0, 0)
+        googleMap?.setOnCameraMoveStartedListener {reason ->
+            if (reason == REASON_GESTURE) {
+                isAutoCameraMoveEnabled = false
+                cameraBtn.alpha = 0.5f
+            }
+        }
     }
 }

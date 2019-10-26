@@ -88,8 +88,6 @@ class DriverService private constructor() {
             "http://naturun-94aa4.appspot.com/api/getnearbyanimals?radius=${radius}&lat=${coordinate.latitude}&long=${coordinate.longitude}",
             null,
             Response.Listener {
-                Log.e("APP", it.toString())
-
                 val animals: List<Animal> =
                     gson.fromJson(it.toString(), Array<Animal>::class.java).toList()
 
