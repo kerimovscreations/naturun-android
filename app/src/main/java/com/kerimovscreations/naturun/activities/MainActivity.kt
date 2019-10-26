@@ -18,6 +18,7 @@ import com.google.android.gms.maps.model.*
 import com.kerimovscreations.naturun.R
 import com.kerimovscreations.naturun.models.Animal
 import com.kerimovscreations.naturun.services.DriverService
+import com.kerimovscreations.naturun.services.NotificationService
 import com.kerimovscreations.naturun.tools.DataSource
 import io.reactivex.disposables.Disposable
 import java.util.*
@@ -79,7 +80,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             pref.edit().putString(getString(R.string.used_id_key), localUserId).apply()
         }
 
-        animalIc = BitmapDescriptorFactory.fromResource(R.mipmap.animal_ic)
+        animalIc = BitmapDescriptorFactory.fromResource(R.mipmap.ic_animal)
     }
 
     override fun onResume() {
@@ -201,6 +202,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun drawAnimals(animals: List<Animal>) {
         googleMap?.let { googleMap ->
+
+            if (animalMarkers.isEmpty() && animals.isNotEmpty()) {
+                NotificationService.instance.setupNotification(this)
+            }
 
             animalMarkers.forEach { marker ->
                 marker.remove()
