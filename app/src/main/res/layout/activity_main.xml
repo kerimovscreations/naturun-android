@@ -18,7 +18,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginStart="16dp"
         android:layout_marginBottom="32dp"
-        android:background="@drawable/bg_action_btn"
+        android:background="@drawable/bg_action_btn_green"
         android:drawableStart="@drawable/ic_navigation_white_24dp"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"

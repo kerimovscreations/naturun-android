@@ -2,8 +2,10 @@ package com.kerimovscreations.naturun.activities
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.MAP_TYPE_SATELLITE
@@ -16,8 +18,6 @@ import com.kerimovscreations.naturun.tools.DataSource
 import io.reactivex.disposables.Disposable
 import java.util.*
 import java.util.concurrent.TimeUnit
-
-
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onResume()
 
         driverCoordinateSubscription =
-            DriverService.driverCoordinateBSubject.subscribe({ coordinate ->
+            DriverService.instance.driverCoordinateBSubject.subscribe({ coordinate ->
                 runOnUiThread {
                     moveMapTo(coordinate)
                 }
@@ -113,10 +113,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         var currentTimeStep = 0
         val driverRouteCoordinates = DataSource.getMovementLocations()
 
+        DriverService.instance.driverCoordinateBSubject.onNext(driverRouteCoordinates[currentTimeStep])
+
         timerSubscription = io.reactivex.Observable.interval(3, TimeUnit.SECONDS).subscribe {
             currentTimeStep++
             if (currentTimeStep < driverRouteCoordinates.size) {
-                DriverService.driverCoordinateBSubject.onNext(driverRouteCoordinates[currentTimeStep])
+                DriverService.instance.driverCoordinateBSubject.onNext(driverRouteCoordinates[currentTimeStep])
             } else {
                 stopDriverAnimation()
             }
@@ -135,6 +137,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun moveMapTo(coordinate: LatLng) {
         googleMap?.let { googleMap ->
 
+            val finalCoordinate = LatLng(coordinate.latitude + 0.003, coordinate.longitude)
+            DriverService.instance.postLocation(this.localUserId!!, coordinate) { result, message ->
+                Log.e("APP", "$result : $message")
+            }
+
             if (driverMarker == null) {
                 val carIc = BitmapDescriptorFactory.fromResource(R.mipmap.car_ic)
 
@@ -149,7 +156,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             val cameraPosition = CameraPosition.Builder()
-                .target(coordinate)
+                .target(finalCoordinate)
                 .zoom(17f)
                 .bearing(0f)
                 .tilt(80f)
@@ -166,9 +173,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         if (isDriverAnimating) {
             stopDriverAnimation()
             actionBtn.text = "Start"
+            actionBtn.background =
+                ResourcesCompat.getDrawable(resources, R.drawable.bg_action_btn_green, null)
         } else {
             startDriverAnimation()
             actionBtn.text = "Stop"
+            actionBtn.background =
+                ResourcesCompat.getDrawable(resources, R.drawable.bg_action_btn_pink, null)
         }
     }
 
