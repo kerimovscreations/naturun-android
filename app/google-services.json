@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "804365780700",
+    "firebase_url": "https://naturun-94aa4.firebaseio.com",
+    "project_id": "naturun-94aa4",
+    "storage_bucket": "naturun-94aa4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:804365780700:android:47cabd459c6c5b9536d619",
+        "android_client_info": {
+          "package_name": "com.kerimovscreations.naturun"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "804365780700-p8vlfqfgmau7ovsqk16edfrq6dqde9d9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAS-CKUWq85GtixGF1hWpQ5dGQoh05Xtts"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "804365780700-p8vlfqfgmau7ovsqk16edfrq6dqde9d9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
