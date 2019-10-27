@@ -172,7 +172,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             DriverService.instance.getNearbyAnimals(
                 coordinate,
-                1000
+                2
             ) { _, _ -> }
 
             if (driverMarker == null) {
